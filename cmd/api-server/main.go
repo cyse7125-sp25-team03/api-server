@@ -24,11 +24,11 @@ func main() {
 	defer db.Close()
 
 	// Register routes
-	routes.RegisterRoutes()
+	r := routes.RegisterRoutes()
 
 	// Start server
 	log.Printf("Server starting on :%s", cfg.ServerPort)
-	if err := http.ListenAndServe(":"+cfg.ServerPort, nil); err != nil {
+	if err := http.ListenAndServe(":"+cfg.ServerPort, r); err != nil {
 		log.Fatalf("Server failed to start: %v", err)
 	}
 }

@@ -154,7 +154,7 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request, userID string) {
 	user, err := repositories.GetUserByID(database.GetDB(), userID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			w.WriteHeader(http.StatusNoContent)
+			respondWithError(w, http.StatusNotFound, "user not found")
 		} else {
 			log.Printf("Error retrieving user: %v", err)
 			w.WriteHeader(http.StatusServiceUnavailable)

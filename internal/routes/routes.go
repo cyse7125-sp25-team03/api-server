@@ -1,23 +1,26 @@
 package routes
 
 import (
-	"net/http"
+	"github.com/gorilla/mux"
 
 	"api-server/internal/handlers"
 	"api-server/internal/middleware"
 )
 
 // Register all the application routes
-func RegisterRoutes() {
+func RegisterRoutes() *mux.Router {
+	r := mux.NewRouter()
+
 	// Public routes
-	http.HandleFunc("/healthz", handlers.HealthCheckHandler) // GET /healthz
-	http.HandleFunc("/v1/user", handlers.CreateUserHandler)  // POST /v1/user
-	// http.HandleFunc("/v1/instructor/", handlers.GetInstructorHandler) // GET /v1/instructor/{instructor_id}
-	// http.HandleFunc("/v1/course/", handlers.GetCourseHandler) // GET /v1/course/{course_id}
+	r.HandleFunc("/healthz", handlers.HealthCheckHandler).Methods("GET")
+	r.HandleFunc("/v1/user", handlers.CreateUserHandler).Methods("POST")
+	r.HandleFunc("/v1/instructor/{instructor_id}", handlers.InstructorHandler).Methods("GET")
 
 	// Private routes
-	http.HandleFunc("/v1/user/", middleware.AuthMiddleware(handlers.UserHandler)) // GET & PUT /v1/user/{user_id}
-	// examples for future routes
-	// http.HandleFunc("/v1/instructor", middleware.AuthMiddleware(handlers.CreateInstructorHandler))
-	// http.HandleFunc("/v1/course", middleware.AuthMiddleware(handlers.CreateCourseHandler))
+	r.HandleFunc("/v1/user/{user_id}", middleware.AuthMiddleware(handlers.UserHandler)).Methods("GET", "PUT")
+
+	r.HandleFunc("/v1/instructor", middleware.AuthMiddleware(handlers.CreateInstructorHandler)).Methods("POST")
+	r.HandleFunc("/v1/instructor/{instructor_id}", middleware.AuthMiddleware(handlers.InstructorHandler)).Methods("PUT", "PATCH", "DELETE")
+
+	return r
 }
