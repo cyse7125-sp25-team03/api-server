@@ -40,14 +40,6 @@ pipeline {
                 }
             }
         }
-        stage('PR Validation') {
-            steps {
-                script {
-                    echo "This is a PR validation for PR#${env.CHANGE_ID}"
-                    sh 'docker build --no-cache -t test-build .'
-                }
-            }
-        }
     }
     
     post {
