@@ -1,0 +1,52 @@
+pipeline {
+    agent any
+    
+    options {
+        timeout(time: 1, unit: 'HOURS')
+        disableConcurrentBuilds()
+    }
+    
+    stages {
+        stage('Checkout Code') {
+            steps {
+                checkout scm
+            }
+        }
+        
+        stage('PR Validation') {
+            steps {
+                script {
+                    echo "This is a PR validation for PR#${env.CHANGE_ID}"
+                    sh 'docker build --no-cache -t test-build .'
+                }
+            }
+        }
+    }    
+    
+    post {
+        success {
+            step([
+                $class: 'GitHubCommitStatusSetter',
+                contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'terraform-checks'],
+                statusResultSource: [$class: 'ConditionalStatusResultSource', results: [
+                    [$class: 'AnyBuildResult', message: 'PR build and validation passed', state: 'SUCCESS']
+                ]]
+            ])
+        }
+        failure {
+            step([
+                $class: 'GitHubCommitStatusSetter',
+                contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'terraform-checks'],
+                statusResultSource: [$class: 'ConditionalStatusResultSource', results: [
+                    [$class: 'AnyBuildResult', message: 'PR build or validation failed', state: 'FAILURE']
+                ]]
+            ])
+            script {
+                currentBuild.result = 'FAILURE'
+            }
+        }
+        always {
+            cleanWs()
+        }
+    }
+}
