@@ -12,7 +12,7 @@ pipeline {
         stage('Initialize Build') {
             steps {
                 script {
-                    githubNotify context: env.GITHUB_CHECK_NAME, status: 'PENDING', description: 'Build is starting...'
+                    githubStatus context: env.GITHUB_CHECK_NAME, status: 'PENDING', description: 'Build is starting...'
                 }
             }
         }
@@ -35,12 +35,12 @@ pipeline {
     post {
         success {
             script {
-                githubNotify context: env.GITHUB_CHECK_NAME, status: 'SUCCESS', description: 'Build and tests passed!'
+                githubStatus context: env.GITHUB_CHECK_NAME, status: 'SUCCESS', description: 'Build and tests passed!'
             }
         }
         failure {
             script {
-                githubNotify context: env.GITHUB_CHECK_NAME, status: 'FAILURE', description: 'Build or tests failed!'
+                githubStatus context: env.GITHUB_CHECK_NAME, status: 'FAILURE', description: 'Build or tests failed!'
         }
         }
         always {
