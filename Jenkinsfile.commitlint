@@ -13,10 +13,6 @@ pipeline {
     options {
         disableConcurrentBuilds()
     }
-    environment {
-        GITHUB_CHECK_NAME = "commitlint-check-api-server"
-    }
-    
     stages {
         stage('Initialize') {
             steps {
