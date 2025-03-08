@@ -11,7 +11,8 @@ node {
             writeFile file: 'calculate_version.sh', text: '''#!/bin/bash
             calculate_version() {
                 # Fetch all tags first
-                git fetch --tags
+                git fetch --tags https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/cyse7125-sp25-team03/api-server.git || echo "Failed to fetch tags"
+
                 
                 # Get latest tag or default to v0.0.0 if none exists
                 LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
