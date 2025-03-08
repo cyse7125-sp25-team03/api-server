@@ -7,13 +7,11 @@ node {
     }
 
     if(PR_VALIDATION){
-        stage('Validate PR'){
-            steps {
-                script {
-                    echo "This is a PR validation for PR#${env.CHANGE_ID}"
-                    sh 'docker build --no-cache -t test-build .'
-                }
-            }
+        stage('Validate PR'){            
+            script {
+                echo "This is a PR validation for PR#${env.CHANGE_ID}"
+                sh 'docker build --no-cache -t test-build .'
+            }     
         }
     }
     else{
