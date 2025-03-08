@@ -1,3 +1,13 @@
+void setBuildStatus(String message, String state) {
+  step([
+      $class: "GitHubCommitStatusSetter",
+      reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/my-org/my-repo"],
+      contextSource: [$class: "ManuallyEnteredCommitContextSource", context: "ci/jenkins/build-status"],
+      errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
+      statusResultSource: [ $class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
+  ]);
+}
+
 pipeline {
     agent any
     
@@ -11,9 +21,9 @@ pipeline {
     stages {
         stage('Initialize Build') {
             steps {
-                script {
-                    githubStatus context: env.GITHUB_CHECK_NAME, status: 'PENDING', description: 'Build is starting...'
-                }
+               
+                    setBuildStatus("Build is starting...'", "PENDING");
+                
             }
         }
         stage('Checkout Code') {
@@ -34,14 +44,13 @@ pipeline {
     
     post {
         success {
-            script {
-                githubStatus context: env.GITHUB_CHECK_NAME, status: 'SUCCESS', description: 'Build and tests passed!'
-            }
+            
+                setBuildStatus("Build succeeded'", "SUCCESS");
+            
         }
         failure {
-            script {
-                githubStatus context: env.GITHUB_CHECK_NAME, status: 'FAILURE', description: 'Build or tests failed!'
-        }
+            
+                setBuildStatus("Build failed'", "FAILURE");
         }
         always {
             cleanWs()
