@@ -1,21 +1,35 @@
-node {
-    def NEW_VERSION
-    def PR_VALIDATION = env.CHANGE_ID != null
+pipeline {
+    agent any
+
+    enivronment {
+        NEW_VERSION = ''
+        PR_VALIDATION = env.CHANGE_ID != null
+    }
     stages {
+        
         stage('Clone repository') {
-            checkout scm
+            steps {
+                checkout scm
+            }
         }
 
-        if(PR_VALIDATION){
-            stage('Validate PR'){            
+        stage('Validate PR'){      
+            when {
+                expression { PR_VALIDATION }
+            }
+            steps {
                 script {
                     echo "This is a PR validation for PR#${env.CHANGE_ID}"
                     sh 'docker build --no-cache -t test-build .'
                 }     
             }
         }
-        else{
-            stage('Calculate Version') {
+        
+        stage('Calculate Version') {
+            when {
+                expression { PR_VALIDATION == false }
+            }
+            steps {
                 script {
                     // Create version calculation script
                     writeFile file: 'calculate_version.sh', text: '''#!/bin/bash
@@ -79,8 +93,14 @@ node {
                     echo "Building version: ${NEW_VERSION}"
                 }
             }
+        }
 
-            stage('Build and Push multi-platform image') {
+        stage('Build and Push multi-platform image') {
+            when {
+                expression { PR_VALIDATION == false }
+            }
+            steps {
+
                 withCredentials([usernamePassword(credentialsId: 'docker-pat', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_TOKEN')]) {
                     // Login to Docker
                     sh """
@@ -103,8 +123,13 @@ node {
                     """
                 }
             }
+        }
 
-            stage('Tag Repository') {
+        stage('Tag Repository') {
+            when {
+                expression { PR_VALIDATION == false }
+            }
+            steps {
                 withCredentials([usernamePassword(credentialsId: 'github-pat', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_TOKEN')]) {
                     sh """
                         git config user.email "jenkins@csyeteam03.xyz"
@@ -117,7 +142,8 @@ node {
         }
     }
     post {
-            success {
+        success {
+            script {
                 if(PR_VALIDATION){
                     step([
                     $class: 'GitHubCommitStatusSetter',
@@ -127,9 +153,10 @@ node {
                     ]]
                 ])
                 }
-                
-            }
-            failure {
+            } 
+        }
+        failure {
+            script {
                 if(PR_VALIDATION){
                     step([
                         $class: 'GitHubCommitStatusSetter',
@@ -138,13 +165,12 @@ node {
                             [$class: 'AnyBuildResult', message: 'PR Build and Validation failed.', state: 'FAILURE']
                         ]]
                     ])
-                    script {
-                        currentBuild.result = 'FAILURE'
-                    }
+                    currentBuild.result = 'FAILURE'
                 }
             }
-            always {
-                cleanWs()
-            }
         }
+        always {
+            cleanWs()
+        }
+    }
 }
