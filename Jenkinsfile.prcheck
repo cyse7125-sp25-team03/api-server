@@ -1,7 +1,21 @@
 pipeline {
     agent any
     
+    options {
+        timeout(time: 1, unit: 'HOURS')
+        disableConcurrentBuilds()
+    }
+    environment {
+        GITHUB_CHECK_NAME = "pr-checks-api-server"
+    }
     stages {
+        stage('Initialize Build') {
+            steps {
+                script {
+                    githubNotify context: env.GITHUB_CHECK_NAME, status: 'PENDING', description: 'Build is starting...'
+                }
+            }
+        }
         stage('Checkout Code') {
             steps {
                 checkout scm
@@ -20,25 +34,14 @@ pipeline {
     
     post {
         success {
-            step([
-                $class: 'GitHubCommitStatusSetter',
-                contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'pr-checks'],
-                statusResultSource: [$class: 'ConditionalStatusResultSource', results: [
-                    [$class: 'AnyBuildResult', message: 'PR build and validation passed', state: 'SUCCESS']
-                ]]
-            ])
+            script {
+                githubNotify context: env.GITHUB_CHECK_NAME, status: 'SUCCESS', description: 'Build and tests passed!'
+            }
         }
         failure {
-            step([
-                $class: 'GitHubCommitStatusSetter',
-                contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'pr-checks'],
-                statusResultSource: [$class: 'ConditionalStatusResultSource', results: [
-                    [$class: 'AnyBuildResult', message: 'PR build or validation failed', state: 'FAILURE']
-                ]]
-            ])
             script {
-                currentBuild.result = 'FAILURE'
-            }
+                githubNotify context: env.GITHUB_CHECK_NAME, status: 'FAILURE', description: 'Build or tests failed!'
+        }
         }
         always {
             cleanWs()
