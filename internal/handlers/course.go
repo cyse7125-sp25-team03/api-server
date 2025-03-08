@@ -1,11 +1,11 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
-	"database/sql"
 	"strings"
 	"time"
 
@@ -120,7 +120,8 @@ func GetCourseHandler(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, sql.ErrNoRows) {
 		http.Error(w, "course not found", http.StatusNotFound)
 		return
-	} else {
+	}
+	if err != nil {
 		log.Printf("Error fetching course: %v", err)
 		http.Error(w, "failed to get course", http.StatusInternalServerError)
 		return
