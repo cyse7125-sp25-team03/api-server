@@ -1,3 +1,12 @@
+void setBuildStatus(String message, String state) {
+  step([
+      $class: "GitHubCommitStatusSetter",
+      contextSource: [$class: "ManuallyEnteredCommitContextSource", context: "ci/jenkins/build-status"],
+      errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
+      statusResultSource: [ $class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
+  ]);
+}
+
 pipeline {
     agent any
     
@@ -5,8 +14,14 @@ pipeline {
         timeout(time: 1, unit: 'HOURS')
         disableConcurrentBuilds()
     }
-    
     stages {
+        stage('Initialize Build') {
+            steps {
+               
+                    setBuildStatus("Build is starting...'", "PENDING");
+                
+            }
+        }
         stage('Checkout Code') {
             steps {
                 checkout scm
@@ -25,25 +40,13 @@ pipeline {
     
     post {
         success {
-            step([
-                $class: 'GitHubCommitStatusSetter',
-                contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'terraform-checks'],
-                statusResultSource: [$class: 'ConditionalStatusResultSource', results: [
-                    [$class: 'AnyBuildResult', message: 'PR build and validation passed', state: 'SUCCESS']
-                ]]
-            ])
+            
+                setBuildStatus("Build succeeded'", "SUCCESS");
+            
         }
         failure {
-            step([
-                $class: 'GitHubCommitStatusSetter',
-                contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'terraform-checks'],
-                statusResultSource: [$class: 'ConditionalStatusResultSource', results: [
-                    [$class: 'AnyBuildResult', message: 'PR build or validation failed', state: 'FAILURE']
-                ]]
-            ])
-            script {
-                currentBuild.result = 'FAILURE'
-            }
+            
+                setBuildStatus("Build failed'", "FAILURE");
         }
         always {
             cleanWs()
