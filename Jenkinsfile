@@ -117,4 +117,35 @@ node {
             }
         }
     }
+    post {
+            success {
+                if(PR_VALIDATION){
+                    step([
+                    $class: 'GitHubCommitStatusSetter',
+                    contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'pr-build-check'],
+                    statusResultSource: [$class: 'ConditionalStatusResultSource', results: [
+                        [$class: 'AnyBuildResult', message: 'PR Build and Validation passed', state: 'SUCCESS']
+                    ]]
+                ])
+                }
+                
+            }
+            failure {
+                if(PR_VALIDATION){
+                    step([
+                        $class: 'GitHubCommitStatusSetter',
+                        contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'pr-build-check'],
+                        statusResultSource: [$class: 'ConditionalStatusResultSource', results: [
+                            [$class: 'AnyBuildResult', message: 'PR Build and Validation failed.', state: 'FAILURE']
+                        ]]
+                    ])
+                    script {
+                        currentBuild.result = 'FAILURE'
+                    }
+                }
+            }
+            always {
+                cleanWs()
+            }
+        }
 }
