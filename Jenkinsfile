@@ -1,110 +1,41 @@
 node {
-    def NEW_VERSION
 
     stage('Clone repository') {
         checkout scm
     }
 
-    stage('Calculate Version') {
-        withCredentials([usernamePassword(credentialsId: 'github-pat', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_TOKEN')]) {
-            script {
-                // Set Git credentials for the script
-                sh """
-                    git config credential.helper store
-                    echo "https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com" > ~/.git-credentials
-                    chmod 600 ~/.git-credentials
-                """
-                
-                // Create version calculation script
-                writeFile file: 'calculate_version.sh', text: '''#!/bin/bash
-                calculate_version() {
-                    # Fetch all tags first
-                    git fetch --tags || echo "Failed to fetch tags"
-
-                    # Get latest tag or default to v0.0.0 if none exists
-                    LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-                    
-                    MAJOR=$(echo $LATEST_TAG | cut -d. -f1 | tr -d 'v')
-                    MINOR=$(echo $LATEST_TAG | cut -d. -f2)
-                    PATCH=$(echo $LATEST_TAG | cut -d. -f3)
-                    
-                    COMMIT_MSG=$(git log -1 --pretty=%B)
-                    
-                    # Determine version bump type based on commit message
-                    if echo "$COMMIT_MSG" | grep -qE "^[a-z]+\\([a-z]+\\)!:" || echo "$COMMIT_MSG" | grep -q "BREAKING CHANGE"; then
-                        VERSION_TYPE="MAJOR"
-                        MAJOR=$((MAJOR + 1))
-                        MINOR=0
-                        PATCH=0
-                    elif echo "$COMMIT_MSG" | grep -qE "^feat\\([a-z]+\\):"; then
-                        VERSION_TYPE="MINOR"
-                        MINOR=$((MINOR + 1))
-                        PATCH=0
-                    else
-                        VERSION_TYPE="PATCH"
-                        PATCH=$((PATCH + 1))
-                    fi
-                    
-                    NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
-                    
-                    # Check if tag already exists and handle according to semantic versioning
-                    while git rev-parse "$NEW_VERSION" >/dev/null 2>&1 || git ls-remote --tags origin | grep -q "refs/tags/${NEW_VERSION}"; do
-                        echo "Warning: Tag $NEW_VERSION already exists, incrementing according to change type"
-                        
-                        if [ "$VERSION_TYPE" = "MAJOR" ]; then
-                            MAJOR=$((MAJOR + 1))
-                            MINOR=0
-                            PATCH=0
-                        elif [ "$VERSION_TYPE" = "MINOR" ]; then
-                            MINOR=$((MINOR + 1))
-                            PATCH=0
-                        else
-                            PATCH=$((PATCH + 1))
-                        fi
-                        
-                        NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
-                        echo "Trying new version: $NEW_VERSION"
-                    done
-                    
-                    echo "$NEW_VERSION"
+    stage('Semantic Release') {
+            withCredentials([usernamePassword(credentialsId: 'github-pat', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_TOKEN')]) {
+                script {
+                    sh "npx semantic-release"
                 }
-
-                calculate_version
-                '''
-                // Make script executable and run it with bash explicitly
-                sh 'chmod 755 calculate_version.sh'
-                env.NEW_VERSION = sh(returnStdout: true, script: '/bin/bash calculate_version.sh').trim()
-                echo "Building version: ${env.NEW_VERSION}"
-                
-                // Clean up credentials after use
-                sh """
-                    rm -f ~/.git-credentials
-                """
-            }
+            }    
         }
-    }
-
     stage('Build and Push multi-platform image') {
         withCredentials([usernamePassword(credentialsId: 'docker-pat', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_TOKEN')]) {
-            // Login to Docker
-            sh """
-                docker login -u ${DOCKER_USERNAME} -p ${DOCKER_TOKEN}
-            """
-            
-            // Setup buildx
-            sh """
-                docker buildx create --use --name builder || docker buildx use builder
-                docker buildx inspect --bootstrap
-            """
-            
-            // Build and push multi-platform image
-            sh """
-                docker buildx build \\
-                    --platform linux/amd64,linux/arm64 \\
-                    -t roarceus/api-server:${NEW_VERSION} \\
-                    -t roarceus/api-server:latest \\
-                    --push .
-            """
+            script{
+                // Get the latest version
+                def LATEST_TAG = sh(script: "git describe --tags --abbrev=0", returnStdout: true).trim()
+                // Login to Docker
+                sh """
+                    docker login -u ${DOCKER_USERNAME} -p ${DOCKER_TOKEN}
+                """
+                
+                // Setup buildx
+                sh """
+                    docker buildx create --use --name builder || docker buildx use builder
+                    docker buildx inspect --bootstrap
+                """
+                
+                // Build and push multi-platform image
+                sh """
+                    docker buildx build \\
+                        --platform linux/amd64,linux/arm64 \\
+                        -t roarceus/api-server:${LATEST_TAG} \\
+                        -t roarceus/api-server:latest \\
+                        --push .
+                """
+            }
         }
     }
 
