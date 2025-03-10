@@ -51,17 +51,10 @@ func ValidateCourseInstructorID(instructorID string) error {
 }
 
 // validate Course department
-func ValidateCourseDepartment(department string) error {
-	if !IsValidEnum(department, ValidDepartments) {
-		return errors.New("Invalid department")
-	}
-	return nil
-}
-
-// validate Course school
-func ValidateCourseSchool(school string) error {
-	if !IsValidEnum(school, ValidSchools) {
-		return errors.New("Invalid school")
+func ValidateCourseDepartment(departmentID int) error {
+	//departmentID cannot be empty
+	if departmentID == 0 {
+		return errors.New("Department ID cannot be empty")
 	}
 	return nil
 }
@@ -74,33 +67,6 @@ func ValidateCourseCreditHours(creditHours int) error {
 	// credit hours cannot be higher than 4
 	if creditHours > 4 {
 		return errors.New("Credit hours cannot be higher than 4")
-	}
-	return nil
-}
-
-// validate Course semester term
-func ValidateCourseSemesterTerm(semesterTerm string) error {
-	if !IsValidEnum(semesterTerm, ValidSemesterTerms) {
-		return errors.New("Invalid semester term")
-	}
-	return nil
-}
-
-// validate Course section
-func ValidateCourseSection(section string) error {
-	if strings.TrimSpace(section) == "" {
-		return errors.New("Section cannot be empty or just blank")
-	}
-	if len(section) > 10 {
-		return errors.New("Section cannot be longer than 10 characters")
-	}
-	return nil
-}
-
-// validate Course enrollment count
-func ValidateCourseEnrollmentCount(enrollmentCount int) error {
-	if enrollmentCount < 0 {
-		return errors.New("Enrollment count cannot be negative")
 	}
 	return nil
 }
@@ -119,24 +85,14 @@ func ValidateCourseRequest(courseReq models.CourseRequest) error {
 	if err := ValidateCourseInstructorID(courseReq.InstructorID); err != nil {
 		return err
 	}
-	if err := ValidateCourseDepartment(courseReq.Department); err != nil {
+	if err := ValidateCourseDepartment(courseReq.DepartmentID); err != nil {
 		return err
 	}
-	if err := ValidateCourseSchool(courseReq.School); err != nil {
-		return err
-	}
+
 	if err := ValidateCourseCreditHours(courseReq.CreditHours); err != nil {
 		return err
 	}
-	if err := ValidateCourseSemesterTerm(courseReq.SemesterTerm); err != nil {
-		return err
-	}
-	if err := ValidateCourseSection(courseReq.Section); err != nil {
-		return err
-	}
-	if err := ValidateCourseEnrollmentCount(courseReq.EnrollmentCount); err != nil {
-		return err
-	}
+
 	return nil
 }
 
@@ -156,40 +112,16 @@ func ValidateCourseUpdateRequest(courseReq models.CourseRequest) error {
 			return err
 		}
 	}
-	if courseReq.InstructorID != "" {
-		if err := ValidateCourseInstructorID(courseReq.InstructorID); err != nil {
-			return err
-		}
-	}
-	if courseReq.Department != "" {
-		if err := ValidateCourseDepartment(courseReq.Department); err != nil {
-			return err
-		}
-	}
-	if courseReq.School != "" {
-		if err := ValidateCourseSchool(courseReq.School); err != nil {
-			return err
-		}
-	}
 	if courseReq.CreditHours != 0 {
 		if err := ValidateCourseCreditHours(courseReq.CreditHours); err != nil {
 			return err
 		}
 	}
-	if courseReq.SemesterTerm != "" {
-		if err := ValidateCourseSemesterTerm(courseReq.SemesterTerm); err != nil {
+	if courseReq.InstructorID != "" {
+		if err := ValidateCourseInstructorID(courseReq.InstructorID); err != nil {
 			return err
 		}
 	}
-	if courseReq.Section != "" {
-		if err := ValidateCourseSection(courseReq.Section); err != nil {
-			return err
-		}
-	}
-	if courseReq.EnrollmentCount != 0 {
-		if err := ValidateCourseEnrollmentCount(courseReq.EnrollmentCount); err != nil {
-			return err
-		}
-	}
+
 	return nil
 }

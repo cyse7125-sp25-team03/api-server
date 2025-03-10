@@ -4,16 +4,12 @@ import "time"
 
 // CourseRequest is the model for creating a new course
 type CourseRequest struct {
-	Code            string `json:"code"`
-	Name            string `json:"name"`
-	Description     string `json:"description"`
-	InstructorID    string `json:"instructor_id"`
-	Department      string `json:"department"` // Enum as string
-	School          string `json:"school"`     // Enum as string
-	CreditHours     int    `json:"credit_hours"`
-	SemesterTerm    string `json:"semester_term"` // Enum as string
-	Section         string `json:"section"`
-	EnrollmentCount int    `json:"enrollment_count"`
+	Code         string `json:"code"`
+	Name         string `json:"name"`
+	Description  string `json:"description"`
+	InstructorID string `json:"instructor_id"`
+	DepartmentID int    `json:"department_id"`
+	CreditHours  int    `json:"credit_hours"`
 }
 type Course struct {
 	CourseID        string    `json:"course_id"`
@@ -24,10 +20,6 @@ type Course struct {
 	Name            string    `json:"name"`
 	Description     string    `json:"description"`
 	InstructorID    string    `json:"instructor_id"`
-	Department      string    `json:"department"` // Enum as string
-	School          string    `json:"school"`     // Enum as string
+	DepartmentID    int       `json:"department_id"`
 	CreditHours     int       `json:"credit_hours"`
-	SemesterTerm    string    `json:"semester_term"` // Enum as string
-	Section         string    `json:"section"`
-	EnrollmentCount int       `json:"enrollment_count"`
 }
