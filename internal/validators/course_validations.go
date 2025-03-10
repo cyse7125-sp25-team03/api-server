@@ -51,9 +51,10 @@ func ValidateCourseInstructorID(instructorID string) error {
 }
 
 // validate Course department
-func ValidateCourseDepartment(departmentID string) error {
-	if strings.TrimSpace(departmentID) == "" {
-		return errors.New("Department ID cannot be empty or just blank")
+func ValidateCourseDepartment(departmentID int) error {
+	//departmentID cannot be empty
+	if departmentID == 0 {
+		return errors.New("Department ID cannot be empty")
 	}
 	return nil
 }
@@ -79,6 +80,12 @@ func ValidateCourseRequest(courseReq models.CourseRequest) error {
 		return err
 	}
 	if err := ValidateCourseDescription(courseReq.Description); err != nil {
+		return err
+	}
+	if err := ValidateCourseInstructorID(courseReq.InstructorID); err != nil {
+		return err
+	}
+	if err := ValidateCourseDepartment(courseReq.DepartmentID); err != nil {
 		return err
 	}
 
@@ -107,6 +114,11 @@ func ValidateCourseUpdateRequest(courseReq models.CourseRequest) error {
 	}
 	if courseReq.CreditHours != 0 {
 		if err := ValidateCourseCreditHours(courseReq.CreditHours); err != nil {
+			return err
+		}
+	}
+	if courseReq.InstructorID != "" {
+		if err := ValidateCourseInstructorID(courseReq.InstructorID); err != nil {
 			return err
 		}
 	}
