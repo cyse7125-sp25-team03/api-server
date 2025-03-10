@@ -77,6 +77,18 @@ func CreateCourseHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userID := user.UserID
+	if _, err := repositories.GetInstructorByID(database.GetDB(), courseReq.InstructorID); err != nil {
+		log.Printf("Error fetching instructor: %v", err)
+		http.Error(w, "failed to get instructor", http.StatusBadRequest)
+		return
+	}
+
+	if _, err := repositories.GetDepartmentByID(database.GetDB(), courseReq.DepartmentID); err != nil {
+		log.Printf("Error fetching department: %v", err)
+		http.Error(w, "failed to get department", http.StatusBadRequest)
+		return
+	}
+	// TODO: add check for course code -> unique
 
 	// Create the course model
 	course := models.Course{
@@ -88,13 +100,10 @@ func CreateCourseHandler(w http.ResponseWriter, r *http.Request) {
 		Name:            courseReq.Name,
 		Description:     courseReq.Description,
 		InstructorID:    courseReq.InstructorID,
-		Department:      courseReq.Department,
-		School:          courseReq.School,
+		DepartmentID:    courseReq.DepartmentID,
 		CreditHours:     courseReq.CreditHours,
-		SemesterTerm:    courseReq.SemesterTerm,
-		Section:         courseReq.Section,
-		EnrollmentCount: courseReq.EnrollmentCount,
 	}
+
 	log.Printf("Course: %v", course)
 	// Create the course
 	newCourse, err := repositories.CreateCourse(database.GetDB(), course)
@@ -164,7 +173,23 @@ func UpdateCourseHandler(w http.ResponseWriter, r *http.Request, courseID string
 		respondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	// check if the instructor exists, if instructor_id is provided
 
+	if req.InstructorID != "" {
+		if _, err := repositories.GetInstructorByID(db, req.InstructorID); err != nil {
+			log.Printf("Error fetching instructor: %v", err)
+			respondWithError(w, http.StatusBadRequest, "instructor not found")
+			return
+		}
+	}
+	// check if the department exists
+	if req.DepartmentID != 0 {
+		if _, err := repositories.GetDepartmentByID(db, req.DepartmentID); err != nil {
+			log.Printf("Error fetching department: %v", err)
+			respondWithError(w, http.StatusBadRequest, "department not found")
+			return
+		}
+	}
 	// Create the course model
 	course := models.Course{
 		CourseID:        existingCourse.CourseID,
@@ -175,12 +200,8 @@ func UpdateCourseHandler(w http.ResponseWriter, r *http.Request, courseID string
 		Name:            getValueOrDefault(req.Name, existingCourse.Name).(string),
 		Description:     getValueOrDefault(req.Description, existingCourse.Description).(string),
 		InstructorID:    getValueOrDefault(req.InstructorID, existingCourse.InstructorID).(string),
-		Department:      getValueOrDefault(req.Department, existingCourse.Department).(string),
-		School:          getValueOrDefault(req.School, existingCourse.School).(string),
+		DepartmentID:    getValueOrDefault(req.DepartmentID, existingCourse.DepartmentID).(int),
 		CreditHours:     getValueOrDefault(req.CreditHours, existingCourse.CreditHours).(int), // Type assertion for int
-		SemesterTerm:    getValueOrDefault(req.SemesterTerm, existingCourse.SemesterTerm).(string),
-		Section:         getValueOrDefault(req.Section, existingCourse.Section).(string),
-		EnrollmentCount: getValueOrDefault(req.EnrollmentCount, existingCourse.EnrollmentCount).(int), // Type assertion for int
 	}
 
 	if err := repositories.UpdateCourse(db, &course); err != nil {
@@ -227,6 +248,23 @@ func PatchCourseHandler(w http.ResponseWriter, r *http.Request, courseID string)
 		respondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	// check if the instructor exists, if instructor_id is provided
+
+	if req.InstructorID != "" {
+		if _, err := repositories.GetInstructorByID(db, req.InstructorID); err != nil {
+			log.Printf("Error fetching instructor: %v", err)
+			respondWithError(w, http.StatusBadRequest, "instructor not found")
+			return
+		}
+	}
+	// check if the department exists
+	if req.DepartmentID != 0 {
+		if _, err := repositories.GetDepartmentByID(db, req.DepartmentID); err != nil {
+			log.Printf("Error fetching department: %v", err)
+			respondWithError(w, http.StatusBadRequest, "department not found")
+			return
+		}
+	}
 
 	// Create the course model
 	course := models.Course{
@@ -238,12 +276,8 @@ func PatchCourseHandler(w http.ResponseWriter, r *http.Request, courseID string)
 		Name:            getValueOrDefault(req.Name, existingCourse.Name).(string),
 		Description:     getValueOrDefault(req.Description, existingCourse.Description).(string),
 		InstructorID:    getValueOrDefault(req.InstructorID, existingCourse.InstructorID).(string),
-		Department:      getValueOrDefault(req.Department, existingCourse.Department).(string),
-		School:          getValueOrDefault(req.School, existingCourse.School).(string),
+		DepartmentID:    getValueOrDefault(req.DepartmentID, existingCourse.DepartmentID).(int),
 		CreditHours:     getValueOrDefault(req.CreditHours, existingCourse.CreditHours).(int), // Type assertion for int
-		SemesterTerm:    getValueOrDefault(req.SemesterTerm, existingCourse.SemesterTerm).(string),
-		Section:         getValueOrDefault(req.Section, existingCourse.Section).(string),
-		EnrollmentCount: getValueOrDefault(req.EnrollmentCount, existingCourse.EnrollmentCount).(int), // Type assertion for int
 	}
 
 	if err := repositories.UpdateCourse(db, &course); err != nil {
