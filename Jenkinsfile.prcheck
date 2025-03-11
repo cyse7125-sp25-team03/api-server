@@ -33,7 +33,11 @@ pipeline {
             steps {
                 script {
                     echo "This is a PR validation for PR#${env.CHANGE_ID}"
+                    //run make vet and fmt
+                    
+                    // Run make fmt and vet in the Go project directory
                     sh 'docker build --no-cache -t test-build .'
+                    
                 }
             }
         }

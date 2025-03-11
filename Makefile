@@ -10,9 +10,13 @@ vet:
 	echo "Running go vet"
 	go vet ./...
 
-build: fmt vet
+build:
 	echo "Building the binary"
-	go build -o bin/ ./...
+	go build -v -o bin/ ./...
+
+all: 
+	echo "Running checks and Building the binary"
+	make fmt vet build
 
 # for development
 run: fmt vet
