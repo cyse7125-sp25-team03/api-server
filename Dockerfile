@@ -1,4 +1,4 @@
-FROM golang:1.23-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.23-alpine AS builder
 
 WORKDIR /app
 
@@ -11,8 +11,9 @@ RUN go mod download
 COPY internal/ internal/
 COPY cmd/ cmd/
 COPY Makefile ./
+ARG TARGETOS TARGETARCH
 
-RUN make build
+RUN GOOS=$TARGETOS GOARCH=$TARGETARCH make build
 
 FROM alpine:3.18
 
