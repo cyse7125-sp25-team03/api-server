@@ -34,6 +34,7 @@ pipeline {
                 script {
                     echo "This is a PR validation for PR#${env.CHANGE_ID}"
                     //run make vet and fmt
+                    sh 'pwd'
                     sh 'make fmt'
                     sh 'make vet'
                     sh 'docker build --no-cache -t test-build .'
