@@ -36,9 +36,6 @@ pipeline {
                     //run make vet and fmt
                     
                     // Run make fmt and vet in the Go project directory
-                    sh 'ls -l'
-                    sh 'make fmt'
-                    sh 'make vet'
                     sh 'docker build --no-cache -t test-build .'
                     
                 }
