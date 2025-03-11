@@ -34,7 +34,7 @@ node {
                         --platform linux/amd64,linux/arm64 \\
                         -t roarceus/api-server:${LATEST_TAG} \\
                         -t roarceus/api-server:latest \\
-                        --push .
+                        --push . \\
                         --progress=plain
                 """
             }
