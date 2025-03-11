@@ -70,3 +70,13 @@ func DeleteTrace(db *sql.DB, traceID string) error {
 
 	return nil
 }
+
+// get filepath from trace id
+func GetFilePath(db *sql.DB, traceID string) (string, error) {
+	var filePath string
+	err := db.QueryRow(
+		"SELECT bucket_path FROM webapp.traces WHERE trace_id = $1",
+		traceID,
+	).Scan(&filePath)
+	return filePath, err
+}

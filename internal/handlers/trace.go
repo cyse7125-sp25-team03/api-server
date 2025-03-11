@@ -272,16 +272,32 @@ func deleteTraceHandler(w http.ResponseWriter, r *http.Request, courseID string,
 		http.Error(w, "failed to get course", http.StatusBadRequest)
 		return
 	}
-
-	//delete trace by traceID
-	err := repositories.DeleteTrace(database.GetDB(), traceID)
+	//get filepath from trace id
+	filePath, err := repositories.GetFilePath(database.GetDB(), traceID)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		log.Printf("Error fetching file path: %v", err)
+		http.Error(w, "failed to get file path", http.StatusInternalServerError)
+		return
+	}
+	//delete file from GCS
+	bucketName := os.Getenv("BUCKET_NAME")
+	if bucketName == "" {
+		log.Fatal("Bucket name is not set in environment variables!")
+	}
+	err = utils.DeleteFileFromGCS(filePath, bucketName)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "failed to delete file")
+		return
+	}
+	//delete trace by traceID
+	errDelete := repositories.DeleteTrace(database.GetDB(), traceID)
+	if errDelete != nil {
+		if errors.Is(errDelete, sql.ErrNoRows) {
 			http.Error(w, "trace not found", http.StatusNotFound)
 			return
 		}
-		log.Printf("Error deleting trace: %v", err)
-		http.Error(w, "failed to delete trace", http.StatusInternalServerError)
+		log.Printf("Error deleting trace from database: %v", errDelete)
+		http.Error(w, "failed to delete trace from database", http.StatusInternalServerError)
 		return
 	}
 
