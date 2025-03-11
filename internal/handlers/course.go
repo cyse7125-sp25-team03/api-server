@@ -109,7 +109,7 @@ func CreateCourseHandler(w http.ResponseWriter, r *http.Request) {
 	newCourse, err := repositories.CreateCourse(database.GetDB(), course)
 	if err != nil {
 		log.Printf("Error creating course: %v", err)
-		http.Error(w, "failed to create course 1", http.StatusInternalServerError)
+		http.Error(w, "failed to create course", http.StatusInternalServerError)
 		return
 	}
 	// return 201 Created with course JSON

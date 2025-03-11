@@ -18,13 +18,17 @@ func RegisterRoutes() *mux.Router {
 	r.HandleFunc("/v1/course/{course_id}", handlers.GetCourseHandler).Methods("GET")
 
 	// Private routes
+	//user
 	r.HandleFunc("/v1/user/{user_id}", middleware.AuthMiddleware(handlers.UserHandler)).Methods("GET", "PUT")
-
+	//instructor
 	r.HandleFunc("/v1/instructor", middleware.AuthMiddleware(handlers.CreateInstructorHandler)).Methods("POST")
 	r.HandleFunc("/v1/instructor/{instructor_id}", middleware.AuthMiddleware(handlers.InstructorHandler)).Methods("PUT", "PATCH", "DELETE")
-
+	//course
 	r.HandleFunc("/v1/course", middleware.AuthMiddleware(handlers.CreateCourseHandler)).Methods("POST")
 	r.HandleFunc("/v1/course/{course_id}", middleware.AuthMiddleware(handlers.CourseHandler)).Methods("PUT", "PATCH", "DELETE")
+	//trace
+	r.HandleFunc("/v1/course/{course_id}/trace", middleware.AuthMiddleware(handlers.TraceHandler)).Methods("POST", "GET")
+	r.HandleFunc("/v1/course/{course_id}/trace/{trace_id}", middleware.AuthMiddleware(handlers.TraceEntityHandler)).Methods("GET", "DELETE")
 
 	return r
 }
