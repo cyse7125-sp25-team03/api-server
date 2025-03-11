@@ -3,8 +3,6 @@ package models
 import "time"
 
 type TraceRequest struct {
-	FileName     string `json:"file_name"`
-	BucketPath   string `json:"bucket_path"`
 	InstructorID string `json:"instructor_id"`
 	SemesterTerm string `json:"semester_term"`
 	Section      string `json:"section"`

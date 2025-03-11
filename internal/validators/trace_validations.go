@@ -9,22 +9,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// validate Filename
-func ValidateFilename(filename string) error {
-	if strings.TrimSpace(filename) == "" {
-		return errors.New("Filename cannot be empty or just blank")
-	}
-	return nil
-}
-
-// validate Bucket Path
-func ValidateBucketPath(bucketPath string) error {
-	if strings.TrimSpace(bucketPath) == "" {
-		return errors.New("Bucket Path cannot be empty or just blank")
-	}
-	return nil
-}
-
 // validate Section
 func ValidateSection(section string) error {
 	if strings.TrimSpace(section) == "" {
@@ -54,12 +38,6 @@ func ValidateSemesterTerm(semesterTerm string) error {
 
 // ValidateTraceRequest validates the request body for creating a new trace
 func ValidateTraceRequest(trace models.TraceRequest) error {
-	if err := ValidateFilename(trace.FileName); err != nil {
-		return err
-	}
-	if err := ValidateBucketPath(trace.BucketPath); err != nil {
-		return err
-	}
 	if err := ValidateSection(trace.Section); err != nil {
 		return err
 	}
@@ -68,6 +46,14 @@ func ValidateTraceRequest(trace models.TraceRequest) error {
 	}
 	if err := ValidateCourseInstructorID(trace.InstructorID); err != nil {
 		return err
+	}
+	return nil
+}
+
+// validate filename
+func ValidateFileName(fileName string) error {
+	if strings.TrimSpace(fileName) == "" {
+		return errors.New("Filename could not be retrieved")
 	}
 	return nil
 }
