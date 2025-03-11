@@ -35,6 +35,7 @@ node {
                         -t roarceus/api-server:${LATEST_TAG} \\
                         -t roarceus/api-server:latest \\
                         --push .
+                        --progress=plain
                 """
             }
         }
