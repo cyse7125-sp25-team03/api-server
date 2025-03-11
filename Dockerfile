@@ -8,7 +8,9 @@ RUN apk add --no-cache make
 COPY go.mod go.sum ./
 RUN go mod download
 
-COPY . .
+COPY internal/ internal/
+COPY cmd/ cmd/
+COPY Makefile ./
 
 RUN make build
 
