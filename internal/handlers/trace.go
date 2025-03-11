@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"api-server/internal/middleware"
 	"api-server/internal/models"
 	"api-server/internal/repositories"
+	"api-server/internal/utils"
 	"api-server/internal/validators"
 
 	"github.com/google/uuid"
@@ -86,11 +88,37 @@ func createTraceHandler(w http.ResponseWriter, r *http.Request, courseID string)
 		respondWithError(w, http.StatusBadRequest, "query parameters are not allowed")
 		return
 	}
-
-	var traceReq models.TraceRequest
-	if r.Body != nil {
-		_ = json.NewDecoder(r.Body).Decode(&traceReq)
+	// Parse multipart form to handle file upload
+	err := r.ParseMultipartForm(10 << 20) // 10MB limit
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "failed to parse multipart form")
+		return
 	}
+	traceReq := models.TraceRequest{
+		InstructorID: r.FormValue("instructor_id"),
+		SemesterTerm: r.FormValue("semester_term"),
+		Section:      r.FormValue("section"),
+	}
+
+	log.Printf("Trace Request: %v", traceReq)
+
+	// Retrieve file
+	file, handler, err := r.FormFile("file")
+	if err != nil {
+		log.Printf("Error retrieving file: %v", err)
+		respondWithError(w, http.StatusBadRequest, "failed to get file from request")
+		return
+	}
+	defer file.Close()
+	log.Printf("Received file: %s, size: %d bytes", handler.Filename, handler.Size)
+
+	if err := validators.ValidateFileName(handler.Filename); err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	//extract other fields
+
 	// add trace request validation from validators
 	if err := validators.ValidateTraceRequest(traceReq); err != nil {
 		respondWithError(w, http.StatusBadRequest, err.Error())
@@ -127,12 +155,24 @@ func createTraceHandler(w http.ResponseWriter, r *http.Request, courseID string)
 		return
 	}
 
+	//upload file to GCS
+	bucketName := os.Getenv("BUCKET_NAME")
+	if bucketName == "" {
+		log.Fatal("Bucket name is not set in environment variables!")
+	}
+
+	uploadedFilePath, err := utils.UploadFileToGCS(file, handler.Filename, bucketName)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "failed to upload file")
+		return
+	}
+
 	trace := models.Trace{
 		TraceID:      uuid.New().String(),
 		UserID:       userID,
-		FileName:     traceReq.FileName,
+		FileName:     handler.Filename,
 		DateCreated:  time.Now().UTC(),
-		BucketPath:   traceReq.BucketPath,
+		BucketPath:   uploadedFilePath,
 		CourseID:     courseID,
 		InstructorID: traceReq.InstructorID,
 		SemesterTerm: traceReq.SemesterTerm,
@@ -232,16 +272,32 @@ func deleteTraceHandler(w http.ResponseWriter, r *http.Request, courseID string,
 		http.Error(w, "failed to get course", http.StatusBadRequest)
 		return
 	}
-
-	//delete trace by traceID
-	err := repositories.DeleteTrace(database.GetDB(), traceID)
+	//get filepath from trace id
+	filePath, err := repositories.GetFilePath(database.GetDB(), traceID)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		log.Printf("Error fetching file path: %v", err)
+		http.Error(w, "failed to get file path", http.StatusInternalServerError)
+		return
+	}
+	//delete file from GCS
+	bucketName := os.Getenv("BUCKET_NAME")
+	if bucketName == "" {
+		log.Fatal("Bucket name is not set in environment variables!")
+	}
+	err = utils.DeleteFileFromGCS(filePath, bucketName)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "failed to delete file")
+		return
+	}
+	//delete trace by traceID
+	errDelete := repositories.DeleteTrace(database.GetDB(), traceID)
+	if errDelete != nil {
+		if errors.Is(errDelete, sql.ErrNoRows) {
 			http.Error(w, "trace not found", http.StatusNotFound)
 			return
 		}
-		log.Printf("Error deleting trace: %v", err)
-		http.Error(w, "failed to delete trace", http.StatusInternalServerError)
+		log.Printf("Error deleting trace from database: %v", errDelete)
+		http.Error(w, "failed to delete trace from database", http.StatusInternalServerError)
 		return
 	}
 
