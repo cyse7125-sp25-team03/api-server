@@ -1,15 +1,15 @@
 ## Table of Contents
 - [api-server](#api-server)
 - [Folder Structure](#folder-structure)
-  - [Environment Variables](#environment-variables)
-  - [Instructions To Run](#instructions-to-run)
-    - [Prerequisites](#prerequisites)
-    - [Installation and Running](#installation-and-running)
+- [Environment Variables](#environment-variables)
+- [Instructions To Run](#instructions-to-run)
+  - [Prerequisites](#prerequisites)
+  - [Running Locally](#running-locally)
   - [Running using Docker](#running-using-docker)
-  - [CI/CD and Releases](#cicd-and-releases)
-    - [CI/CD](#cicd)
-    - [Releases](#releases)
-  - [Contributing](#contributing)
+- [CI/CD and Releases](#cicd-and-releases)
+  - [CI/CD](#cicd)
+  - [Releases](#releases)
+- [Contributing](#contributing)
 
 # api-server
 The api-server is a backend application designed to handle API requests, manage data, and serve business logic for the project `trace-survey-analysis`. It follows a structured architecture with modular components for maintainability and scalability.
@@ -41,7 +41,7 @@ api-server/
 
 ```
 
-## Environment Variables
+# Environment Variables
 Environment Variables
 Before running the application, ensure you have the required environment variables set:
 
@@ -57,15 +57,15 @@ Before running the application, ensure you have the required environment variabl
 
 You can configure these by exporting them in your terminal before running the application.
 
-## Instructions To Run
-### Prerequisites
+# Instructions To Run
+## Prerequisites
   Ensure you have the following installed on your system:
 
 - Go (latest version recommended)
 - Docker (optional for containerized deployment)
 - Make (for simplified build and run commands)
 
-### Installation and Running
+## Running Locally
 ```
 git clone https://github.com/cyse7125-sp25-team03/api-server
 cd api-server
@@ -81,21 +81,21 @@ docker build -t api-server .
 docker run -p 8080:8080 api-server
 ```
 
-## CI/CD and Releases
+# CI/CD and Releases
 
-### CI/CD
+## CI/CD
 This project uses Jenkins for continuous integration. The repository includes:
 
 - Jenkinsfile: Main CI pipeline.
 - Jenkinsfile.commitlint: Linting pipeline for commit messages.
 - Jenkinsfile.prcheck: Pipeline for PR validation.
 
-### Releases
+## Releases
 - When a pull request is successfully merged, a Docker image is built.
 - The Semantic Versioning bot creates a release on GitHub with a tag.
 - The tagged release is used for the Docker image, which is then pushed to Docker Hub.
 
-## Contributing
+# Contributing
 1. Fork the repository
 2. Create a new feature branch (git checkout -b feature-branch)
 3. Commit your changes (git commit -m "Add new feature")
