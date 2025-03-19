@@ -22,8 +22,12 @@ pipeline {
     stages {
         stage('Initialize Build') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'github-pat', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_TOKEN')]) {
-                    setBuildStatus("Build is starting...'", "PENDING");
+                script{
+                    env.GITHUB_CONTEXT_LABEL = "ci/jenkins/build-status"
+                    echo "DEBUG: GITHUB_CONTEXT_LABEL=${env.GITHUB_CONTEXT_LABEL}"
+                }
+
+
                 }
             }
         }
